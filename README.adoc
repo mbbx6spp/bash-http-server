@@ -1,0 +1,32 @@
+== Barebones HTTP server in Bash
+
+For the lolz. Needs no explanation except this was the result of a Friday
+night home alone with the spouse of kids to bother me.
+
+Moral of the story is...don't leave Susan alone.
+
+Released under the BSD 3-clause license. See link:LICENSE[].
+
+=== Usage
+
+[source,shell]
+----
+$ cd bin
+$ ./start
+----
+
+In another terminal try:
+
+[source,shell]
+----
+$ curl -i localhost:8080/
+200 OK
+Date: Thu, 23 Jul 2015 21:15:14 CDT
+Expires: Thu, 23 Jul 2015 21:15:14 CDT
+Content-Type: text/plain
+Server: hello-bash@redhorn/0.0.1
+
+Yo yo yo!
+----
+
+Enjoy!

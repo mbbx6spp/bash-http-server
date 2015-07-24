@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# Purpose: Provide HTTP server that displays the current server date to
+# validate the artifact structure and play with.
+
+declare -a _http_responses=(
+  [200]="OK"
+  [201]="Created"
+  [202]="Accepted"
+  [204]="No Content"
+  [301]="Moved Permanently"
+  [302]="Found"
+  [307]="Temporary Redirect"
+  [400]="Bad Request"
+  [401]="Unauthorized"
+  [403]="Forbidden"
+  [404]="Not Found"
+  [405]="Method Not Allowed"
+  [500]="Internal Server Error"
+  [501]="Not Implemented Error"
+  [502]="Bad Gateway"
+  [503]="Temporarily Unavailable"
+)
+
+function _recv() {
+  echo "< $*" >&2
+}
+
+function _send() {
+  printf '%s\r\n' "$*"
+}
+
+function _send_headers() {
+  local -r dt="$(date +"%a, %d %b %Y %H:%M:%S %Z")"
+  local -r hst="$(hostname -s)"
+  local -a hdrs=(
+    "Date: ${dt}"
+    "Expires: ${dt}"
+    "Content-Type: text/plain"
+    "Server: hello-bash@${hst}/0.0.1"
+  )
+  for h in "${hdrs[@]}"; do
+    _send "${h}"
+  done
+}
+
+function _send_body() {
+  _send "Yo yo yo!"
+}
+
+function _send_response() {
+  _send "${1}"
+  _send_headers
+  _send ""
+  _send_body
+}
+
+function _respond_with() {
+  if [ "$#" -ne 1 ]; then
+    >&2 "Error: Expected one argument for ${FUNCNAME}, received $#."
+    >&2 "Usage: ${0} CODE"
+    return 1
+  fi
+  local -r code="${1}"
+  _send_response "${code} ${_http_responses[${code}]}"
+}
+
+function _parse_request() {
+  if [ "$#" -ne 1 ]; then
+    >&2 "Error: Expected one argument for ${FUNCNAME}, received $#."
+    >&2 "Usage: ${0} REQUEST_LINE"
+    return 1
+  fi
+  local -r req="${1%%$'r'}"
+  read -r req_method req_uri req_http_ver <<<"${req}"
+
+  # Validate request (only support GET and / URI so far :)
+  if [ "${req_method}" = "GET" -a "${req_uri}" = "/" -a -n "${req_http_ver}" ]; then
+    _respond_with 200
+  elif [ "${req_uri}" != "/" ]; then
+    _respond_with 404
+  elif [ -z "${req_http_ver}" ]; then
+    _respond_with 400
+  else
+    _respond_with 500
+  fi
+}
+
+function _main() {
+  read -r line || _respond_with 400
+  _parse_request "${line}"
+}
+
+if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
+  export -f _respond_with
+  export -f _parse_request
+else
+  set -eu
+  _main
+fi

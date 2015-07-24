@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Purpose: Start the service instance.
+# Usage: $0 [--force]
+
+function l_usage() {
+  echo "Usage: ${0}"
+}
+
+function l_main() {
+  socat TCP4-LISTEN:8080,fork EXEC:./server
+}
+
+if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
+  >&2 echo "Error: Sourced an executable script (${0}), nothing to do."
+else
+  set -eu
+  l_main
+fi
